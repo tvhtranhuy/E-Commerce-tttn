@@ -1,6 +1,5 @@
-
-const userRouter = require('../routes/user')
-const { notFound, errHandler } = require('../middlewares/errHandler')
+const userRouter = require('./user')
+const { notFound , errHandler } = require('../middlewares/errHandler')
 
 const initRoutes = (app) => {
     app.use('/api/user', userRouter)
