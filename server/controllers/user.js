@@ -1,8 +1,7 @@
-
+const { generateAccessToken, generateRefreshToken } = require('../middlewares/jwt')
 const user = require('../models/user')
 const User = require('../models/user')
 const asyncHandler = require('express-async-handler')
-
 const register = asyncHandler(async(req, res)=>{
     const {email, password, firstname, lastname} = req.body
     if (!email||!password||!firstname||!lastname)
@@ -22,6 +21,9 @@ const register = asyncHandler(async(req, res)=>{
         })
     }
 })
+
+// RefreshToken => cấp mới access token
+// Access token => xác thực người dùng , quân quyền người dùng
 const login = asyncHandler(async(req, res)=>{
     const {email, password} = req.body
     if (!email||!password)
@@ -33,17 +35,35 @@ const login = asyncHandler(async(req, res)=>{
     const response = await User.findOne({email})
 
     if (response && await response.isCorrectPassword(password)){
+        // tach password va role ra khoi response
         const {password, role, ...userData} = response.toObject()
+        // tao access token
+        const accessToken = generateAccessToken(response._id,role)
+        // tao refresh token
+        const refreshToken = generateRefreshToken(response._id)
+        //luu refresh token vao database
+        await User.findByIdAndUpdate(response._id, { refreshToken}, {new:true})
+        // luu refresh token vao cookie
+        res.cookie('refreshToken', refreshToken, {httpOnly: true, maxAge: 7*24*60*60*1000})
         return res.status(200).json({
             sucess: true,
+            accessToken,
             userData
         })
     }else{
         throw new Error('invarlid credentials')
     }
-
+})
+const getCurrent = asyncHandler(async (req, res) => {
+    const{_id} = req.user
+    const user = await User.findById(_id).select('-refreshToken -password -role')
+    return res.status(200).json({
+        success: false,
+        rs: user ? user : 'User not found'
+    })
 })
 module.exports = {
     register,
-    login
+    login,
+    getCurrent
 }
