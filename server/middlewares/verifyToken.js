@@ -24,6 +24,18 @@ const verifyAccessToken = asyncHandler(async(req,res,next)=>{
 
 })
 
+// Check apiAdmin role là 1945 nếu vượt thì là false 1979 là User
+const isAdmin = asyncHandler((req, res, next) => {
+    const { role } = req.user
+    if (role !== 'admin')
+        return res.status(401).json({
+            success: false,
+            mes: ' REQUIRE ADMIN ROLE'
+        })
+    next()
+})
+
 module.exports = {
-    verifyAccessToken
+    verifyAccessToken,
+    isAdmin
 }
