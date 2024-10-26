@@ -1,7 +1,7 @@
 const Product = require('../models/product')
 const asyncHandler = require("express-async-handler")
 const slugify = require("slugify")
-const makeSKU = require("uniqid")
+//const makeSKU = require("uniqid")
 
 const createProduct = asyncHandler(async (req, res) => {
     if (Object.keys(req.body).length === 0) throw new Error('Missing imputs')
@@ -22,14 +22,41 @@ const createProduct = asyncHandler(async (req, res) => {
     })
   })
 // Fillterting, sorting & pagination
-  const getProducts = asyncHandler(async (req, res) => {
-    // const { pid} = req.params
-    const products = await Product.find()
-    return res.status(200).json({
-        success: products ? true : false,
-        productDatas: products ? products : 'Cannot get products'
-    })
-  })
+const getProducts = asyncHandler(async (req, res) => {
+    const queries = { ...req.query };
+    const excludeFields = ['limit', 'sort', 'page', 'fields'];
+    excludeFields.forEach(el => delete queries[el]);
+
+    // Format lại các operators cho đúng cú pháp Mongoose
+    let queryString = JSON.stringify(queries);
+    queryString = queryString.replace(/\b(gte|gt|lt|lte)\b/g, matchedEl => `$${matchedEl}`);
+    const formatedQueries = JSON.parse(queryString);
+
+    // Filtering
+    if (queries?.title) formatedQueries.title = { $regex: queries.title, $options: 'i' };
+    let queryCommand = Product.find(formatedQueries);
+
+    // Sorting
+    if (req.query.sort) {
+        const sortBy = req.query.sort.split(",").join(" ")
+        queryCommand = queryCommand.sort(sortBy)
+    }
+
+    // Execute query
+    // Số lượng sp thỏa mãn điều kiện !== số lượng sp trả về 1 lần gọi API
+    try {
+        const response = await queryCommand; 
+        const counts = await Product.countDocuments(formatedQueries);
+        return res.status(200).json({
+            success: !!response,
+            products: response || "Cannot get products",
+            counts
+        });
+    } catch (err) {
+        throw new Error(err.message || "An error occurred while fetching products");
+    }
+});
+
 
   const updateProduct = asyncHandler(async(req, res )=>{
     const { pid} = req.params
