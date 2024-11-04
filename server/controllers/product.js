@@ -159,6 +159,36 @@ const uploadImagesProduct = asyncHandler(async (req, res) => {
   // console.log(req.file);
   // return res.json('oke')
 })
+
+const addVarriant = asyncHandler(async (req, res) => {
+  const { pid } = req.params
+  const { title, price, color } = req.body
+  // Kiểm tra xem có file thumb được tải lên không
+  const thumb = req?.files?.thumb[0]?.path
+  // Kiểm tra xem có file images được tải lên không
+  const images = req.files?.images?.map((el) => el.path)
+  if (!(title && price && color)) throw new Error("Missing inputs")
+  const response = await Product.findByIdAndUpdate(
+    pid,
+    {
+      $push: {
+        varriants: {
+          color,
+          price,
+          title,
+          thumb,
+          images,
+          sku: makeSKU().toUpperCase(),
+        },
+      },
+    },
+    { new: true }
+  )
+  return res.status(200).json({
+    success: response ? true : false,
+    mes: response ? "Added varriant." : "Cannot upload images product",
+  })
+})
   module.exports = {
     createProduct,
     getProduct,
@@ -166,6 +196,6 @@ const uploadImagesProduct = asyncHandler(async (req, res) => {
     updateProduct,
     deleteProduct,
     ratings,
-    uploadImagesProduct
-    // addVarriant,
+    uploadImagesProduct,
+    addVarriant
   }
