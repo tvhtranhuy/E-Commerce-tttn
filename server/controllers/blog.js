@@ -100,15 +100,39 @@ const dislikeBlog = asyncHandler(async (req, res) => {
     }
   })
 
+  // const excludedFields = '-refreshToken -password -role -crearedAt -updateAt'
+  const getBlog = asyncHandler(async (req, res) => {
+    const { bid } = req.params
+    const blog = await Blog.findByIdAndUpdate(
+      bid,
+      { $inc: { numberViews: 1 } },
+      { new: true }
+    )
+      .populate("likes", "firstname lastname")
+      .populate("dislikes", "firstname lastname")
+    return res.json({
+      success: blog ? true : false,
+      rs: blog,
+    })
+  })
+
+  const deleteBlog = asyncHandler(async (req, res) => {
+    const { bid } = req.params
+    const blog = await Blog.findByIdAndDelete(bid)
+    return res.json({
+      success: blog ? true : false,
+      deletedBlog: blog || "Something went wrong",
+    })
+  })
 
 module.exports = {
   createNewBlog,
   updateBlog,
   getBlogs,
   likeBlog,
-  dislikeBlog
-//   getBlog,
-//   deleteBlog,
+  dislikeBlog,
+  getBlog,
+  deleteBlog
 //   uploadImagesBlog,
 }
 //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NmZlOTkzYzI1MjdhYTk5OTRkYTdhN2UiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3MzAwMzQ5NDgsImV4cCI6MTczMDI5NDE0OH0.xzqcGGuhr6MiIBriMti1sosIxphLNfeLO8ajDCdfT-Y
