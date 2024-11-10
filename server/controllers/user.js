@@ -219,7 +219,55 @@ const logout = asyncHandler(async (req, res) => {
       updatedUser: response ? response : "Some thing went wrong",
     })
   })
-
+  const updateCart = asyncHandler(async (req, res) => {
+    const { _id } = req.user
+    const { pid, quantity, color } = req.body
+  
+    if (!pid || !quantity || !color) throw new Error("Missing inputs")
+  
+    // Kiểm tra xem pid có phải là ObjectId hợp lệ không
+    if (!mongoose.Types.ObjectId.isValid(pid)) {
+      return res.status(400).json({
+        success: false,
+        mes: "Invalid product ID",
+      })
+    }
+  
+    const user = await User.findById(_id).select('cart')
+    
+    // Tìm sản phẩm trong giỏ hàng
+    const alreadyProduct = user?.cart?.find(el => el.product.toString() === pid)
+    
+    if (alreadyProduct) {
+      // Nếu sản phẩm đã có trong giỏ hàng, có thể cập nhật số lượng hoặc hành động khác tại đây
+      if (alreadyProduct.color === color){
+        const response = await User.updateOne({ cart: { $elemMatch: alreadyProduct } }, { $set: { "cart.$.quantity": quantity } }, { new: true })
+        return res.status(200).json({
+          success: response ? true : false,
+          updatedUser: response ? response : 'Some thing went wrong'
+        })
+      }else{
+        const response = await User. findByIdAndUpdate(_id, { $push: { cart: { product: pid, quantity, color } } }, { new: true })
+        return res.status(200).json({
+          success: response ? true : false,
+          updatedUser: response ? response : 'Some thing went wrong'
+        })
+      }
+    } else {
+      // Thêm sản phẩm vào giỏ hàng nếu chưa có
+      const response = await User.findByIdAndUpdate(
+        _id,
+        { $push: { cart: { product: pid, quantity, color } } },
+        { new: true }
+      )
+  
+      return res.status(200).json({
+        success: response ? true : false,
+        mes: response ? response : "Something went wrong",
+      })
+    }
+  })
+  
   
 
 module.exports = {
@@ -235,5 +283,6 @@ module.exports = {
     updateUser,
     updateUserByAdmin,
     updateUserAddress,
+    updateCart,
 
 }

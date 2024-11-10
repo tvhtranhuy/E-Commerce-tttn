@@ -7,7 +7,7 @@ var orderSchema = new mongoose.Schema(
       {
         product: { type: mongoose.Types.ObjectId, ref: "Product" },
         count: Number,
-        // quantity: Number,
+        quantity: Number,
         color: String,
         // price: Number,
         // thumbnail: String,
