@@ -41,12 +41,12 @@ var userSchema = new mongoose.Schema({
         color: String,
         
     }],
-    // address: String,
-    address: {
-        type: Array,
-        default: [],
-    },
-    wishlist: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
+    address: String,
+    // address: {
+    //     type: Array,
+    //     default: [],
+    // },
+    // wishlist: [{ type: mongoose.Types.ObjectId, ref: 'Product' }],
     isBlocked: {
         type: Boolean,
         default: false
